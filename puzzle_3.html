@@ -62,10 +62,13 @@
           piece.classList.add('puzzlePiece');
           piece.width = pieceSize;
           piece.height = pieceSize;
-          piece.draggable = true;
+          piece.draggable = false; // Disabilita il drag nativo
           const context = piece.getContext('2d');
           context.drawImage(img, col * pieceSize, row * pieceSize, pieceSize, pieceSize, 0, 0, pieceSize, pieceSize);
           piece.dataset.position = `${row}-${col}`;
+          piece.style.position = 'absolute';
+          piece.style.left = `${col * pieceSize}px`;
+          piece.style.top = `${row * pieceSize}px`;
           pieces.push(piece);
         }
       }
@@ -75,70 +78,43 @@
       pieces.forEach((piece, index) => {
         piece.dataset.index = index;
 
-        // Eventi per mouse
-        piece.addEventListener('dragstart', (event) => {
+        piece.addEventListener('pointerdown', (event) => {
           if (!puzzleCompleted) {
             draggedElement = event.target;
-            event.dataTransfer.setData('text/plain', draggedElement.dataset.index);
-          } else {
-            event.preventDefault();
+            offsetX = event.offsetX;
+            offsetY = event.offsetY;
+            draggedElement.setPointerCapture(event.pointerId);
           }
         });
 
-        piece.addEventListener('dragover', (event) => {
-          event.preventDefault();
-        });
-
-        piece.addEventListener('drop', (event) => {
-          event.preventDefault();
-          const targetElement = event.target.closest('.puzzlePiece');
-          const sourceIndex = draggedElement.dataset.index;
-          const targetIndex = targetElement.dataset.index;
-
-          if (draggedElement && targetElement && draggedElement !== targetElement && !puzzleCompleted) {
-            swapPieces(sourceIndex, targetIndex);
-            checkPuzzle(); // Verifica automatica dopo lo scambio
-          }
-        });
-
-        // Eventi per touch
-        piece.addEventListener('touchstart', (event) => {
-          if (!puzzleCompleted) {
-            const touch = event.touches[0];
-            offsetX = touch.clientX - event.target.offsetLeft;
-            offsetY = touch.clientY - event.target.offsetTop;
-            draggedElement = event.target;
-          }
-        });
-
-        piece.addEventListener('touchmove', (event) => {
-          event.preventDefault();
+        piece.addEventListener('pointermove', (event) => {
           if (draggedElement) {
-            const touch = event.touches[0];
-            draggedElement.style.position = 'absolute';
-            draggedElement.style.left = `${touch.clientX - offsetX}px`;
-            draggedElement.style.top = `${touch.clientY - offsetY}px`;
-            draggedElement.style.zIndex = '1000';
+            const containerRect = puzzleContainer.getBoundingClientRect();
+            draggedElement.style.left = `${event.clientX - containerRect.left - offsetX}px`;
+            draggedElement.style.top = `${event.clientY - containerRect.top - offsetY}px`;
           }
         });
 
-        piece.addEventListener('touchend', (event) => {
-          event.preventDefault();
-          const touch = event.changedTouches[0];
-          const targetElement = document.elementFromPoint(touch.clientX, touch.clientY).closest('.puzzlePiece');
-          const sourceIndex = draggedElement.dataset.index;
-          const targetIndex = targetElement ? targetElement.dataset.index : null;
+        piece.addEventListener('pointerup', (event) => {
+          if (draggedElement) {
+            const containerRect = puzzleContainer.getBoundingClientRect();
+            const x = event.clientX - containerRect.left - offsetX;
+            const y = event.clientY - containerRect.top - offsetY;
+            const targetElement = document.elementFromPoint(event.clientX, event.clientY).closest('.puzzlePiece');
+            const sourceIndex = draggedElement.dataset.index;
+            const targetIndex = targetElement ? targetElement.dataset.index : null;
 
-          if (draggedElement && targetElement && draggedElement !== targetElement && !puzzleCompleted) {
-            swapPieces(sourceIndex, targetIndex);
-            checkPuzzle(); // Verifica automatica dopo lo scambio
+            if (draggedElement && targetElement && draggedElement !== targetElement && !puzzleCompleted) {
+              swapPieces(sourceIndex, targetIndex);
+              checkPuzzle(); // Verifica automatica dopo lo scambio
+            }
+
+            // Assicurati che il pezzo torni nella posizione corretta
+            draggedElement.style.left = `${Math.round(x / pieceSize) * pieceSize}px`;
+            draggedElement.style.top = `${Math.round(y / pieceSize) * pieceSize}px`;
+            draggedElement.releasePointerCapture(event.pointerId);
+            draggedElement = null;
           }
-
-          draggedElement.style.position = '';
-          draggedElement.style.left = '';
-          draggedElement.style.top = '';
-          draggedElement.style.zIndex = '';
-          draggedElement = null;
         });
 
         puzzleContainer.appendChild(piece);
@@ -154,10 +130,13 @@
     // Scambia gli indici
     [sourcePiece.dataset.index, targetPiece.dataset.index] = [targetIndex, sourceIndex];
 
-    // Scambia i pezzi nel DOM
-    const sourceNextSibling = sourcePiece.nextElementSibling;
-    puzzleContainer.insertBefore(sourcePiece, targetPiece);
-    puzzleContainer.insertBefore(targetPiece, sourceNextSibling);
+    // Scambia le posizioni nel DOM
+    const sourceLeft = sourcePiece.style.left;
+    const sourceTop = sourcePiece.style.top;
+    sourcePiece.style.left = targetPiece.style.left;
+    sourcePiece.style.top = targetPiece.style.top;
+    targetPiece.style.left = sourceLeft;
+    targetPiece.style.top = sourceTop;
   }
 
   let puzzleCompleted = false;
