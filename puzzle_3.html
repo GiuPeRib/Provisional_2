@@ -42,7 +42,7 @@
   <div id="puzzleContainer"></div>
   <div id="message"></div>
   <button id="restartButton">Ricomincia</button>
-  <div id="version">Versione: 1.7</div> <!-- Aggiungi la versione qui -->
+  <div id="version">Versione: 1.8</div> <!-- Aggiungi la versione qui -->
 
   <script>
     const imageUrl = 'https://github.com/GiuPeRib/Provisional_2/blob/main/Apparato%20di%20distillazione%20semplice%20-%20Copia.jpg?raw=true'; // Sostituisci con il link alla tua immagine predefinita
@@ -57,8 +57,11 @@
       const img = new Image();
       img.src = imageUrl;
       img.onload = function() {
-        const cols = Math.ceil(img.width / pieceSize);
-        const rows = Math.ceil(img.height / pieceSize);
+        const scale = Math.min(window.innerWidth / img.width, window.innerHeight / img.height);
+        const scaledWidth = img.width * scale;
+        const scaledHeight = img.height * scale;
+        const cols = Math.ceil(scaledWidth / pieceSize);
+        const rows = Math.ceil(scaledHeight / pieceSize);
 
         puzzleContainer.style.width = `${cols * pieceSize}px`;
         puzzleContainer.style.height = `${rows * pieceSize}px`;
@@ -73,7 +76,7 @@
             piece.height = pieceSize;
             piece.draggable = false; // Disabilita il drag nativo
             const context = piece.getContext('2d');
-            context.drawImage(img, col * pieceSize, row * pieceSize, pieceSize, pieceSize, 0, 0, pieceSize, pieceSize);
+            context.drawImage(img, col * pieceSize / scale, row * pieceSize / scale, pieceSize / scale, pieceSize / scale, 0, 0, pieceSize, pieceSize);
             piece.dataset.position = `${row}-${col}`;
             piece.style.left = `${col * pieceSize}px`;
             piece.style.top = `${row * pieceSize}px`;
