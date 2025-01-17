@@ -35,7 +35,7 @@
   <button id="restartButton">Ricomincia</button>
   <div id="version">Versione: 1.7</div> <!-- Aggiungi la versione qui -->
 
-  <script>
+ <script>
   const imageUrl = 'https://github.com/GiuPeRib/Provisional_2/blob/main/Apparato%20di%20distillazione%20semplice%20-%20Copia.jpg?raw=true'; // Sostituisci con il link alla tua immagine predefinita
   let draggedElement = null;
   let touchStartX = 0;
@@ -130,6 +130,7 @@
             swapPieces(sourceIndex, targetIndex);
             checkPuzzle(); // Verifica automatica dopo lo scambio
           }
+
           draggedElement.style.transform = ''; // Resetta la trasformazione
           draggedElement = null;
         });
@@ -192,5 +193,6 @@
 
   createPuzzle(imageUrl);
 </script>
+
 </body>
 </html>
