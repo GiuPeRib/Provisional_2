@@ -33,7 +33,7 @@
   <div id="puzzleContainer"></div>
   <div id="message"></div>
   <button id="restartButton">Ricomincia</button>
-  <div id="version">Versione: 1.10</div> <!-- Aggiungi la versione qui -->
+  <div id="version">Versione: 1.11</div> <!-- Aggiungi la versione qui -->
 
 <script>
   const imageUrl = 'https://github.com/GiuPeRib/Provisional_2/blob/main/Apparato%20di%20distillazione%20semplice%20-%20Copia.jpg?raw=true'; // Sostituisci con il link alla tua immagine predefinita
@@ -97,10 +97,8 @@
 
         piece.addEventListener('pointerup', (event) => {
           if (draggedElement) {
-            const containerRect = puzzleContainer.getBoundingClientRect();
-            const x = event.clientX - containerRect.left - offsetX;
-            const y = event.clientY - containerRect.top - offsetY;
-            const targetElement = document.elementFromPoint(event.clientX, event.clientY).closest('.puzzlePiece');
+            const touch = event.changedTouches ? event.changedTouches[0] : event;
+            const targetElement = document.elementFromPoint(touch.clientX, touch.clientY).closest('.puzzlePiece');
             const sourceIndex = draggedElement.dataset.index;
             const targetIndex = targetElement ? targetElement.dataset.index : null;
 
@@ -109,9 +107,13 @@
               checkPuzzle(); // Verifica automatica dopo lo scambio
             }
 
-            // Assicurati che il pezzo torni nella posizione corretta
-            draggedElement.style.left = `${Math.round(x / pieceSize) * pieceSize}px`;
-            draggedElement.style.top = `${Math.round(y / pieceSize) * pieceSize}px`;
+            // Reimposta la posizione del pezzo
+            const pieceSize = draggedElement.width;
+            const col = Math.round(parseFloat(draggedElement.style.left) / pieceSize);
+            const row = Math.round(parseFloat(draggedElement.style.top) / pieceSize);
+            draggedElement.style.left = `${col * pieceSize}px`;
+            draggedElement.style.top = `${row * pieceSize}px`;
+
             draggedElement.releasePointerCapture(event.pointerId);
             draggedElement = null;
           }
@@ -127,16 +129,18 @@
     const sourcePiece = puzzleContainer.querySelector(`[data-index='${sourceIndex}']`);
     const targetPiece = puzzleContainer.querySelector(`[data-index='${targetIndex}']`);
 
-    // Scambia gli indici
-    [sourcePiece.dataset.index, targetPiece.dataset.index] = [targetIndex, sourceIndex];
+    if (sourcePiece && targetPiece) {
+      // Scambia gli indici
+      [sourcePiece.dataset.index, targetPiece.dataset.index] = [targetIndex, sourceIndex];
 
-    // Scambia le posizioni nel DOM
-    const sourceLeft = sourcePiece.style.left;
-    const sourceTop = sourcePiece.style.top;
-    sourcePiece.style.left = targetPiece.style.left;
-    sourcePiece.style.top = targetPiece.style.top;
-    targetPiece.style.left = sourceLeft;
-    targetPiece.style.top = sourceTop;
+      // Scambia le posizioni nel DOM
+      const sourceLeft = sourcePiece.style.left;
+      const sourceTop = sourcePiece.style.top;
+      sourcePiece.style.left = targetPiece.style.left;
+      sourcePiece.style.top = targetPiece.style.top;
+      targetPiece.style.left = sourceLeft;
+      targetPiece.style.top = sourceTop;
+    }
   }
 
   let puzzleCompleted = false;
