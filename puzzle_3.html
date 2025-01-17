@@ -12,6 +12,7 @@
       cursor: pointer;
       border: 1px solid #ccc;
       user-select: none;
+      position: relative;
     }
     #message {
       margin-top: 20px;
@@ -114,9 +115,8 @@
             event.preventDefault();
             if (draggedElement) {
               const touch = event.touches[0];
-              const deltaX = touch.clientX - touchStartX;
-              const deltaY = touch.clientY - touchStartY;
-              draggedElement.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+              draggedElement.style.left = `${touch.clientX - touchStartX}px`;
+              draggedElement.style.top = `${touch.clientY - touchStartY}px`;
             }
           });
 
@@ -131,7 +131,8 @@
               swapPieces(sourceIndex, targetIndex);
               checkPuzzle(); // Verifica automatica dopo lo scambio
             }
-            draggedElement.style.transform = ''; // Resetta la trasformazione
+            draggedElement.style.left = '0px'; // Resetta la trasformazione
+            draggedElement.style.top = '0px'; // Resetta la trasformazione
             draggedElement = null;
           });
 
