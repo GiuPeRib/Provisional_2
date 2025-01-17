@@ -37,149 +37,27 @@
   <div id="version">Versione: 1.7</div> <!-- Aggiungi la versione qui -->
 
   <script>
-    const imageUrl = 'https://github.com/GiuPeRib/Provisional_2/blob/main/Apparato%20di%20distillazione%20semplice%20-%20Copia.jpg?raw=true'; // Sostituisci con il link alla tua immagine predefinita
-    let draggedElement = null;
-    let offsetX = 0;
-    let offsetY = 0;
-
-    function createPuzzle(imageUrl) {
-      const puzzleContainer = document.getElementById('puzzleContainer');
-      puzzleContainer.innerHTML = '';
-      const pieceSize = 100; // Dimensione del pezzo del puzzle
-      const img = new Image();
-      img.src = imageUrl;
-      img.onload = function() {
-        const cols = Math.ceil(img.width / pieceSize);
-        const rows = Math.ceil(img.height / pieceSize);
-
-        puzzleContainer.style.gridTemplateColumns = `repeat(${cols}, ${pieceSize}px)`;
-        puzzleContainer.style.gridTemplateRows = `repeat(${rows}, ${pieceSize}px)`;
-
-        const pieces = [];
-
-        for (let row = 0; row < rows; row++) {
-          for (let col = 0; col < cols; col++) {
-            const piece = document.createElement('canvas');
-            piece.classList.add('puzzlePiece');
-            piece.width = pieceSize;
-            piece.height = pieceSize;
-            piece.draggable = false; // Disabilita il drag nativo
-            const context = piece.getContext('2d');
-            context.drawImage(img, col * pieceSize, row * pieceSize, pieceSize, pieceSize, 0, 0, pieceSize, pieceSize);
-            piece.dataset.position = `${row}-${col}`;
-            pieces.push(piece);
-          }
-        }
-
-        pieces.sort(() => Math.random() - 0.5);
-
-        pieces.forEach((piece, index) => {
-          piece.dataset.index = index;
-
-          piece.addEventListener('pointerdown', (event) => {
-            if (!puzzleCompleted) {
-              draggedElement = event.target;
-              offsetX = event.offsetX;
-              offsetY = event.offsetY;
-              draggedElement.setPointerCapture(event.pointerId);
-            }
-          });
-
-          piece.addEventListener('pointermove', (event) => {
-            if (draggedElement) {
-              const containerRect = puzzleContainer.getBoundingClientRect();
-              draggedElement.style.position = 'absolute';
-              draggedElement.style.left = `${event.clientX - containerRect.left - offsetX}px`;
-              draggedElement.style.top = `${event.clientY - containerRect.top - offsetY}px`;
-            }
-          });
-
-          piece.addEventListener('pointerup', (event) => {
-            if (draggedElement) {
-              const touch = event.changedTouches ? event.changedTouches[0] : event;
-              const targetElement = document.elementFromPoint(touch.clientX, touch.clientY).closest('.puzzlePiece');
-              const sourceIndex = draggedElement.dataset.index;
-              const targetIndex = targetElement ? targetElement.dataset.index : null;
-
-              if (draggedElement && targetElement && draggedElement !== targetElement && !puzzleCompleted) {
-                swapPieces(sourceIndex, targetIndex);
-                checkPuzzle(); // Verifica automatica dopo lo scambio
-              }
-
-              // Reimposta la posizione del pezzo
-              const pieceSize = draggedElement.width;
-              const col = Math.round(parseFloat(draggedElement.style.left) / pieceSize);
-              const row = Math.round(parseFloat(draggedElement.style.top) / pieceSize);
-              draggedElement.style.left = `${col * pieceSize}px`;
-              draggedElement.style.top = `${row * pieceSize}px`;
-
-              draggedElement.releasePointerCapture(event.pointerId);
-              draggedElement = null;
-            }
-          });
-
-          puzzleContainer.appendChild(piece);
-        });
-      };
+    function isMobile() {
+      return /Mobi|Android/i.test(navigator.userAgent);
     }
 
-    function swapPieces(sourceIndex, targetIndex) {
-      const puzzleContainer = document.getElementById('puzzleContainer');
-      const sourcePiece = puzzleContainer.querySelector(`[data-index='${sourceIndex}']`);
-      const targetPiece = puzzleContainer.querySelector(`[data-index='${targetIndex}']`);
-
-      if (sourcePiece && targetPiece) {
-        // Scambia gli indici
-        [sourcePiece.dataset.index, targetPiece.dataset.index] = [targetIndex, sourceIndex];
-
-        // Scambia le posizioni nel DOM
-        const sourceLeft = sourcePiece.style.left;
-        const sourceTop = sourcePiece.style.top;
-        sourcePiece.style.left = targetPiece.style.left;
-        sourcePiece.style.top = targetPiece.style.top;
-        targetPiece.style.left = sourceLeft;
-        targetPiece.style.top = sourceTop;
-      }
+    function loadScript(url, callback) {
+      const script = document.createElement('script');
+      script.type = 'text/javascript';
+      script.src = url;
+      script.onload = callback;
+      document.head.appendChild(script);
     }
 
-    let puzzleCompleted = false;
-
-    function checkPuzzle() {
-      const pieces = document.querySelectorAll('.puzzlePiece');
-      let isCorrect = true;
-
-      pieces.forEach((piece, index) => {
-        const [originalRow, originalCol] = piece.dataset.position.split('-').map(Number);
-        const currentRow = Math.floor(index / Math.sqrt(pieces.length));
-        const currentCol = index % Math.sqrt(pieces.length);
-
-        if (originalRow !== currentRow || originalCol !== currentCol) {
-          isCorrect = false;
-        }
+    if (isMobile()) {
+      loadScript('puzzle-mobile.js', () => {
+        createPuzzle(imageUrl);
       });
-
-      const message = document.getElementById('message');
-      if (isCorrect) {
-        message.textContent = 'Congratulazioni! Hai ricomposto correttamente il puzzle!';
-        puzzleCompleted = true;
-        document.getElementById('restartButton').style.display = 'block';
-        // Disabilita il drag sui pezzi
-        document.querySelectorAll('.puzzlePiece').forEach(piece => {
-          piece.draggable = false;
-        });
-      } else {
-        message.textContent = 'Il puzzle non è ancora corretto. Continua a provare!';
-      }
+    } else {
+      loadScript('puzzle-desktop.js', () => {
+        createPuzzle(imageUrl);
+      });
     }
-
-    document.getElementById('restartButton').addEventListener('click', () => {
-      puzzleCompleted = false;
-      createPuzzle(imageUrl);
-      document.getElementById('restartButton').style.display = 'none';
-      document.getElementById('message').textContent = '';
-    });
-
-    createPuzzle(imageUrl);
   </script>
 </body>
 </html>
