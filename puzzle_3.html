@@ -47,7 +47,7 @@
   <div id="puzzleContainer"></div>
   <div id="message"></div>
   <button id="restartButton">Ricomincia</button>
-  <div id="version">Versione: 1.7</div> <!-- Aggiungi la versione qui -->
+  <div id="version">Versione: 1.10</div> <!-- Aggiungi la versione qui -->
 
   <script>
     const imageUrl = 'https://github.com/GiuPeRib/Provisional_2/blob/main/Apparato%20di%20distillazione%20semplice%20-%20Copia.jpg?raw=true';
@@ -62,7 +62,7 @@
       const img = new Image();
       img.src = imageUrl;
       img.onload = function() {
-        const scale = Math.min(window.innerWidth / img.width, window.innerHeight / img.height);
+        const scale = Math.min((window.innerWidth - 50) / img.width, (window.innerHeight - 100) / img.height);
         const scaledWidth = img.width * scale;
         const scaledHeight = img.height * scale;
         const cols = Math.floor(scaledWidth / pieceSize);
