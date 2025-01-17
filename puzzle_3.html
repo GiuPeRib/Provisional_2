@@ -5,18 +5,17 @@
   <title>Puzzle Game</title>
   <style>
     #puzzleContainer {
-      display: grid;
-      gap: 2px;
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
+      position: relative;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
     }
     .puzzlePiece {
       cursor: pointer;
       border: 1px solid #ccc;
       user-select: none;
-      position: absolute;
+      box-sizing: border-box;
     }
     .selected {
       border: 2px solid red;
@@ -40,6 +39,9 @@
     body {
       margin: 0;
       overflow: hidden; /* Impedisce lo scorrimento della pagina */
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
   </style>
 </head>
@@ -62,7 +64,7 @@
       const img = new Image();
       img.src = imageUrl;
       img.onload = function() {
-        const scale = Math.min((window.innerWidth - 100) / img.width, (window.innerHeight - 200) / img.height);
+        const scale = Math.min(window.innerWidth / (img.width + 20), window.innerHeight / (img.height + 70));
         const scaledWidth = img.width * scale;
         const scaledHeight = img.height * scale;
         const cols = Math.floor(scaledWidth / pieceSize);
@@ -70,8 +72,6 @@
 
         puzzleContainer.style.width = `${cols * pieceSize}px`;
         puzzleContainer.style.height = `${rows * pieceSize}px`;
-        puzzleContainer.style.gridTemplateColumns = `repeat(${cols}, ${pieceSize}px)`;
-        puzzleContainer.style.gridTemplateRows = `repeat(${rows}, ${pieceSize}px)`;
 
         const pieces = [];
 
@@ -84,14 +84,14 @@
             const context = piece.getContext('2d');
             context.drawImage(img, col * pieceSize / scale, row * pieceSize / scale, pieceSize / scale, pieceSize / scale, 0, 0, pieceSize, pieceSize);
             piece.dataset.position = `${row}-${col}`;
-            piece.style.left = `${col * pieceSize}px`;
-            piece.style.top = `${row * pieceSize}px`;
             pieces.push(piece);
           }
         }
 
+        // Mescola i pezzi
         pieces.sort(() => Math.random() - 0.5);
 
+        // Posiziona i pezzi
         pieces.forEach((piece, index) => {
           piece.dataset.index = index;
           piece.addEventListener('click', handlePieceClick);
@@ -137,9 +137,14 @@
         [sourcePiece.dataset.index, targetPiece.dataset.index] = [targetIndex, sourceIndex];
 
         // Scambia i pezzi nel DOM
-        const sourceNextSibling = sourcePiece.nextElementSibling;
-        puzzleContainer.insertBefore(sourcePiece, targetPiece);
-        puzzleContainer.insertBefore(targetPiece, sourceNextSibling);
+        const sourceClone = sourcePiece.cloneNode(true);
+        const targetClone = targetPiece.cloneNode(true);
+        puzzleContainer.replaceChild(sourceClone, targetPiece);
+        puzzleContainer.replaceChild(targetClone, sourcePiece);
+
+        // Riassegna gli eventi click
+        sourceClone.addEventListener('click', handlePieceClick);
+        targetClone.addEventListener('click', handlePieceClick);
       }
     }
 
