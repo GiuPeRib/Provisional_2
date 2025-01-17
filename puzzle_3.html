@@ -4,23 +4,14 @@
   <meta charset="UTF-8">
   <title>Puzzle Game</title>
   <style>
-    body {
-      margin: 0;
-      overflow: hidden; /* Impedisce lo scorrimento della pagina */
-    }
     #puzzleContainer {
       display: grid;
       gap: 2px;
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
     }
     .puzzlePiece {
       cursor: pointer;
       border: 1px solid #ccc;
       user-select: none;
-      position: absolute; /* Assicura il posizionamento corretto */
     }
     #message {
       margin-top: 20px;
@@ -47,8 +38,8 @@
   <script>
     const imageUrl = 'https://github.com/GiuPeRib/Provisional_2/blob/main/Apparato%20di%20distillazione%20semplice%20-%20Copia.jpg?raw=true'; // Sostituisci con il link alla tua immagine predefinita
     let draggedElement = null;
-    let offsetX = 0;
-    let offsetY = 0;
+    let touchStartX = 0;
+    let touchStartY = 0;
 
     function createPuzzle(imageUrl) {
       const puzzleContainer = document.getElementById('puzzleContainer');
@@ -57,14 +48,11 @@
       const img = new Image();
       img.src = imageUrl;
       img.onload = function() {
-        const scale = Math.min(window.innerWidth / img.width, window.innerHeight / img.height);
-        const scaledWidth = img.width * scale;
-        const scaledHeight = img.height * scale;
-        const cols = Math.ceil(scaledWidth / pieceSize);
-        const rows = Math.ceil(scaledHeight / pieceSize);
+        const cols = Math.ceil(img.width / pieceSize);
+        const rows = Math.ceil(img.height / pieceSize);
 
-        puzzleContainer.style.width = `${cols * pieceSize}px`;
-        puzzleContainer.style.height = `${rows * pieceSize}px`;
+        puzzleContainer.style.gridTemplateColumns = `repeat(${cols}, ${pieceSize}px)`;
+        puzzleContainer.style.gridTemplateRows = `repeat(${rows}, ${pieceSize}px)`;
 
         const pieces = [];
 
@@ -74,12 +62,10 @@
             piece.classList.add('puzzlePiece');
             piece.width = pieceSize;
             piece.height = pieceSize;
-            piece.draggable = false; // Disabilita il drag nativo
+            piece.draggable = true;
             const context = piece.getContext('2d');
-            context.drawImage(img, col * pieceSize / scale, row * pieceSize / scale, pieceSize / scale, pieceSize / scale, 0, 0, pieceSize, pieceSize);
+            context.drawImage(img, col * pieceSize, row * pieceSize, pieceSize, pieceSize, 0, 0, pieceSize, pieceSize);
             piece.dataset.position = `${row}-${col}`;
-            piece.style.left = `${col * pieceSize}px`;
-            piece.style.top = `${row * pieceSize}px`;
             pieces.push(piece);
           }
         }
@@ -89,45 +75,64 @@
         pieces.forEach((piece, index) => {
           piece.dataset.index = index;
 
-          piece.addEventListener('pointerdown', (event) => {
+          piece.addEventListener('dragstart', (event) => {
             if (!puzzleCompleted) {
               draggedElement = event.target;
-              offsetX = event.offsetX;
-              offsetY = event.offsetY;
-              draggedElement.setPointerCapture(event.pointerId);
+              event.dataTransfer.setData('text/plain', draggedElement.dataset.index);
+            } else {
+              event.preventDefault();
             }
           });
 
-          piece.addEventListener('pointermove', (event) => {
-            if (draggedElement) {
-              const containerRect = puzzleContainer.getBoundingClientRect();
-              draggedElement.style.left = `${event.clientX - containerRect.left - offsetX}px`;
-              draggedElement.style.top = `${event.clientY - containerRect.top - offsetY}px`;
+          piece.addEventListener('dragover', (event) => {
+            event.preventDefault();
+          });
+
+          piece.addEventListener('drop', (event) => {
+            event.preventDefault();
+            const targetElement = event.target.closest('.puzzlePiece');
+            const sourceIndex = draggedElement.dataset.index;
+            const targetIndex = targetElement.dataset.index;
+
+            if (draggedElement && targetElement && draggedElement !== targetElement && !puzzleCompleted) {
+              swapPieces(sourceIndex, targetIndex);
+              checkPuzzle(); // Verifica automatica dopo lo scambio
             }
           });
 
-          piece.addEventListener('pointerup', (event) => {
-            if (draggedElement) {
-              const touch = event.changedTouches ? event.changedTouches[0] : event;
-              const targetElement = document.elementFromPoint(touch.clientX, touch.clientY).closest('.puzzlePiece');
-              const sourceIndex = draggedElement.dataset.index;
-              const targetIndex = targetElement ? targetElement.dataset.index : null;
-
-              if (draggedElement && targetElement && draggedElement !== targetElement && !puzzleCompleted) {
-                swapPieces(sourceIndex, targetIndex);
-                checkPuzzle(); // Verifica automatica dopo lo scambio
-              }
-
-              // Reimposta la posizione del pezzo
-              const pieceSize = draggedElement.width;
-              const col = Math.round(parseFloat(draggedElement.style.left) / pieceSize);
-              const row = Math.round(parseFloat(draggedElement.style.top) / pieceSize);
-              draggedElement.style.left = `${col * pieceSize}px`;
-              draggedElement.style.top = `${row * pieceSize}px`;
-
-              draggedElement.releasePointerCapture(event.pointerId);
-              draggedElement = null;
+          // Aggiungi supporto per i touch events
+          piece.addEventListener('touchstart', (event) => {
+            if (!puzzleCompleted) {
+              const touch = event.touches[0];
+              touchStartX = touch.clientX;
+              touchStartY = touch.clientY;
+              draggedElement = event.target;
             }
+          });
+
+          piece.addEventListener('touchmove', (event) => {
+            event.preventDefault();
+            if (draggedElement) {
+              const touch = event.touches[0];
+              const deltaX = touch.clientX - touchStartX;
+              const deltaY = touch.clientY - touchStartY;
+              draggedElement.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+            }
+          });
+
+          piece.addEventListener('touchend', (event) => {
+            event.preventDefault();
+            const touch = event.changedTouches[0];
+            const targetElement = document.elementFromPoint(touch.clientX, touch.clientY).closest('.puzzlePiece');
+            const sourceIndex = draggedElement.dataset.index;
+            const targetIndex = targetElement.dataset.index;
+
+            if (draggedElement && targetElement && draggedElement !== targetElement && !puzzleCompleted) {
+              swapPieces(sourceIndex, targetIndex);
+              checkPuzzle(); // Verifica automatica dopo lo scambio
+            }
+            draggedElement.style.transform = ''; // Resetta la trasformazione
+            draggedElement = null;
           });
 
           puzzleContainer.appendChild(piece);
@@ -140,18 +145,13 @@
       const sourcePiece = puzzleContainer.querySelector(`[data-index='${sourceIndex}']`);
       const targetPiece = puzzleContainer.querySelector(`[data-index='${targetIndex}']`);
 
-      if (sourcePiece && targetPiece) {
-        // Scambia gli indici
-        [sourcePiece.dataset.index, targetPiece.dataset.index] = [targetIndex, sourceIndex];
+      // Scambia gli indici
+      [sourcePiece.dataset.index, targetPiece.dataset.index] = [targetIndex, sourceIndex];
 
-        // Scambia le posizioni nel DOM
-        const sourceLeft = sourcePiece.style.left;
-        const sourceTop = sourcePiece.style.top;
-        sourcePiece.style.left = targetPiece.style.left;
-        sourcePiece.style.top = targetPiece.style.top;
-        targetPiece.style.left = sourceLeft;
-        targetPiece.style.top = sourceTop;
-      }
+      // Scambia i pezzi nel DOM
+      const sourceNextSibling = sourcePiece.nextElementSibling;
+      puzzleContainer.insertBefore(sourcePiece, targetPiece);
+      puzzleContainer.insertBefore(targetPiece, sourceNextSibling);
     }
 
     let puzzleCompleted = false;
