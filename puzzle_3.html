@@ -35,7 +35,7 @@
   <button id="restartButton">Ricomincia</button>
   <div id="version">Versione: 1.7</div> <!-- Aggiungi la versione qui -->
 
- <script>
+<script>
   const imageUrl = 'https://github.com/GiuPeRib/Provisional_2/blob/main/Apparato%20di%20distillazione%20semplice%20-%20Copia.jpg?raw=true'; // Sostituisci con il link alla tua immagine predefinita
   let draggedElement = null;
   let touchStartX = 0;
@@ -107,6 +107,8 @@
             touchStartX = touch.clientX;
             touchStartY = touch.clientY;
             draggedElement = event.target;
+            draggedElement.style.position = 'absolute';
+            draggedElement.style.zIndex = '1000';
           }
         });
 
@@ -114,24 +116,25 @@
           event.preventDefault();
           if (draggedElement) {
             const touch = event.touches[0];
-            const deltaX = touch.clientX - touchStartX;
-            const deltaY = touch.clientY - touchStartY;
-            draggedElement.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+            draggedElement.style.left = `${touch.pageX - touchStartX}px`;
+            draggedElement.style.top = `${touch.pageY - touchStartY}px`;
           }
         });
 
         piece.addEventListener('touchend', (event) => {
           event.preventDefault();
-          const targetElement = document.elementFromPoint(touchStartX, touchStartY).closest('.puzzlePiece');
+          const touch = event.changedTouches[0];
+          const targetElement = document.elementFromPoint(touch.clientX, touch.clientY).closest('.puzzlePiece');
           const sourceIndex = draggedElement.dataset.index;
-          const targetIndex = targetElement.dataset.index;
+          const targetIndex = targetElement ? targetElement.dataset.index : null;
 
           if (draggedElement && targetElement && draggedElement !== targetElement && !puzzleCompleted) {
             swapPieces(sourceIndex, targetIndex);
             checkPuzzle(); // Verifica automatica dopo lo scambio
           }
 
-          draggedElement.style.transform = ''; // Resetta la trasformazione
+          draggedElement.style.position = '';
+          draggedElement.style.zIndex = '';
           draggedElement = null;
         });
 
@@ -193,6 +196,5 @@
 
   createPuzzle(imageUrl);
 </script>
-
 </body>
 </html>
