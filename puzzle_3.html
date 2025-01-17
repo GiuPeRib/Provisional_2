@@ -5,13 +5,19 @@
   <title>Puzzle Game</title>
   <style>
     #puzzleContainer {
-      display: grid;
-      gap: 2px;
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
     .puzzlePiece {
       cursor: pointer;
       border: 1px solid #ccc;
       user-select: none;
+      position: absolute;
     }
     .selected {
       border: 2px solid red;
@@ -20,15 +26,21 @@
       margin-top: 20px;
       font-weight: bold;
       color: green;
+      text-align: center;
     }
     #version {
       margin-top: 20px;
       font-weight: bold;
       color: blue;
+      text-align: center;
     }
     #restartButton {
       display: none;
       margin-top: 20px;
+    }
+    body {
+      margin: 0;
+      overflow: hidden; /* Impedisce lo scorrimento della pagina */
     }
   </style>
 </head>
@@ -50,11 +62,14 @@
       const img = new Image();
       img.src = imageUrl;
       img.onload = function() {
-        const cols = Math.ceil(img.width / pieceSize);
-        const rows = Math.ceil(img.height / pieceSize);
+        const scale = Math.min(window.innerWidth / img.width, window.innerHeight / img.height);
+        const scaledWidth = img.width * scale;
+        const scaledHeight = img.height * scale;
+        const cols = Math.ceil(scaledWidth / pieceSize);
+        const rows = Math.ceil(scaledHeight / pieceSize);
 
-        puzzleContainer.style.gridTemplateColumns = `repeat(${cols}, ${pieceSize}px)`;
-        puzzleContainer.style.gridTemplateRows = `repeat(${rows}, ${pieceSize}px)`;
+        puzzleContainer.style.width = `${scaledWidth}px`;
+        puzzleContainer.style.height = `${scaledHeight}px`;
 
         const pieces = [];
 
@@ -65,7 +80,9 @@
             piece.width = pieceSize;
             piece.height = pieceSize;
             const context = piece.getContext('2d');
-            context.drawImage(img, col * pieceSize, row * pieceSize, pieceSize, pieceSize, 0, 0, pieceSize, pieceSize);
+            context.drawImage(img, col * pieceSize / scale, row * pieceSize / scale, pieceSize / scale, pieceSize / scale, 0, 0, pieceSize, pieceSize);
+            piece.style.left = `${col * pieceSize}px`;
+            piece.style.top = `${row * pieceSize}px`;
             piece.dataset.position = `${row}-${col}`;
             pieces.push(piece);
           }
