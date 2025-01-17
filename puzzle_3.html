@@ -62,7 +62,7 @@
       const img = new Image();
       img.src = imageUrl;
       img.onload = function() {
-        const scale = Math.min((window.innerWidth - 50) / img.width, (window.innerHeight - 150) / img.height);
+        const scale = Math.min((window.innerWidth - 100) / img.width, (window.innerHeight - 200) / img.height);
         const scaledWidth = img.width * scale;
         const scaledHeight = img.height * scale;
         const cols = Math.floor(scaledWidth / pieceSize);
@@ -83,9 +83,9 @@
             piece.height = pieceSize;
             const context = piece.getContext('2d');
             context.drawImage(img, col * pieceSize / scale, row * pieceSize / scale, pieceSize / scale, pieceSize / scale, 0, 0, pieceSize, pieceSize);
+            piece.dataset.position = `${row}-${col}`;
             piece.style.left = `${col * pieceSize}px`;
             piece.style.top = `${row * pieceSize}px`;
-            piece.dataset.position = `${row}-${col}`;
             pieces.push(piece);
           }
         }
