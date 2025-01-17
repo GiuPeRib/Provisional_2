@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <title>Puzzle Game</title>
+  <style>
+    #puzzleContainer {
+      display: grid;
+      gap: 2px;
+    }
+    .puzzlePiece {
+      cursor: pointer;
+      border: 1px solid #ccc;
+      user-select: none;
+    }
+    #message {
+      margin-top: 20px;
+      font-weight: bold;
+      color: green;
+    }
+    #version {
+      margin-top: 20px;
+      font-weight: bold;
+      color: blue;
+    }
+    #restartButton {
+      display: none;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div id="puzzleContainer"></div>
+  <div id="message"></div>
+  <button id="restartButton">Ricomincia</button>
+  <div id="version">Versione: 1.7</div> <!-- Aggiungi la versione qui -->
+
+  <script>
+  const imageUrl = 'https://github.com/GiuPeRib/Provisional_2/blob/main/Apparato%20di%20distillazione%20semplice%20-%20Copia.jpg?raw=true'; // Sostituisci con il link alla tua immagine predefinita
+  let draggedElement = null;
+  let touchStartX = 0;
+  let touchStartY = 0;
+
+  function createPuzzle(imageUrl) {
+    const puzzleContainer = document.getElementById('puzzleContainer');
+    puzzleContainer.innerHTML = '';
+    const pieceSize = 100; // Dimensione del pezzo del puzzle
+    const img = new Image();
+    img.src = imageUrl;
+    img.onload = function() {
+      const cols = Math.ceil(img.width / pieceSize);
+      const rows = Math.ceil(img.height / pieceSize);
+
+      puzzleContainer.style.gridTemplateColumns = `repeat(${cols}, ${pieceSize}px)`;
+      puzzleContainer.style.gridTemplateRows = `repeat(${rows}, ${pieceSize}px)`;
+
+      const pieces = [];
+
+      for (let row = 0; row < rows; row++) {
+        for (let col = 0; col < cols; col++) {
+          const piece = document.createElement('canvas');
+          piece.classList.add('puzzlePiece');
+          piece.width = pieceSize;
+          piece.height = pieceSize;
+          piece.draggable = true;
+          const context = piece.getContext('2d');
+          context.drawImage(img, col * pieceSize, row * pieceSize, pieceSize, pieceSize, 0, 0, pieceSize, pieceSize);
+          piece.dataset.position = `${row}-${col}`;
+          pieces.push(piece);
+        }
+      }
+
+      pieces.sort(() => Math.random() - 0.5);
+
+      pieces.forEach((piece, index) => {
+        piece.dataset.index = index;
+
+        piece.addEventListener('dragstart', (event) => {
+          if (!puzzleCompleted) {
+            draggedElement = event.target;
+            event.dataTransfer.setData('text/plain', draggedElement.dataset.index);
+          } else {
+            event.preventDefault();
+          }
+        });
+
+        piece.addEventListener('dragover', (event) => {
+          event.preventDefault();
+        });
+
+        piece.addEventListener('drop', (event) => {
+          event.preventDefault();
+          const targetElement = event.target.closest('.puzzlePiece');
+          const sourceIndex = draggedElement.dataset.index;
+          const targetIndex = targetElement.dataset.index;
+
+          if (draggedElement && targetElement && draggedElement !== targetElement && !puzzleCompleted) {
+            swapPieces(sourceIndex, targetIndex);
+            checkPuzzle(); // Verifica automatica dopo lo scambio
+          }
+        });
+
+        // Aggiungi supporto per i touch events
+        piece.addEventListener('touchstart', (event) => {
+          if (!puzzleCompleted) {
+            const touch = event.touches[0];
+            touchStartX = touch.clientX;
+            touchStartY = touch.clientY;
+            draggedElement = event.target;
+          }
+        });
+
+        piece.addEventListener('touchmove', (event) => {
+          event.preventDefault();
+          if (draggedElement) {
+            const touch = event.touches[0];
+            const deltaX = touch.clientX - touchStartX;
+            const deltaY = touch.clientY - touchStartY;
+            draggedElement.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+          }
+        });
+
+        piece.addEventListener('touchend', (event) => {
+          event.preventDefault();
+          const targetElement = document.elementFromPoint(touchStartX, touchStartY).closest('.puzzlePiece');
+          const sourceIndex = draggedElement.dataset.index;
+          const targetIndex = targetElement.dataset.index;
+
+          if (draggedElement && targetElement && draggedElement !== targetElement && !puzzleCompleted) {
+            swapPieces(sourceIndex, targetIndex);
+            checkPuzzle(); // Verifica automatica dopo lo scambio
+          }
+          draggedElement.style.transform = ''; // Resetta la trasformazione
+          draggedElement = null;
+        });
+
+        puzzleContainer.appendChild(piece);
+      });
+    };
+  }
+
+  function swapPieces(sourceIndex, targetIndex) {
+    const puzzleContainer = document.getElementById('puzzleContainer');
+    const sourcePiece = puzzleContainer.querySelector(`[data-index='${sourceIndex}']`);
+    const targetPiece = puzzleContainer.querySelector(`[data-index='${targetIndex}']`);
+
+    // Scambia gli indici
+    [sourcePiece.dataset.index, targetPiece.dataset.index] = [targetIndex, sourceIndex];
+
+    // Scambia i pezzi nel DOM
+    const sourceNextSibling = sourcePiece.nextElementSibling;
+    puzzleContainer.insertBefore(sourcePiece, targetPiece);
+    puzzleContainer.insertBefore(targetPiece, sourceNextSibling);
+  }
+
+  let puzzleCompleted = false;
+
+  function checkPuzzle() {
+    const pieces = document.querySelectorAll('.puzzlePiece');
+    let isCorrect = true;
+
+    pieces.forEach((piece, index) => {
+      const [originalRow, originalCol] = piece.dataset.position.split('-').map(Number);
+      const currentRow = Math.floor(index / Math.sqrt(pieces.length));
+      const currentCol = index % Math.sqrt(pieces.length);
+
+      if (originalRow !== currentRow || originalCol !== currentCol) {
+        isCorrect = false;
+      }
+    });
+
+    const message = document.getElementById('message');
+    if (isCorrect) {
+      message.textContent = 'Congratulazioni! Hai ricomposto correttamente il puzzle!';
+      puzzleCompleted = true;
+      document.getElementById('restartButton').style.display = 'block';
+      // Disabilita il drag sui pezzi
+      document.querySelectorAll('.puzzlePiece').forEach(piece => {
+        piece.draggable = false;
+      });
+    } else {
+      message.textContent = 'Il puzzle non è ancora corretto. Continua a provare!';
+    }
+  }
+
+  document.getElementById('restartButton').addEventListener('click', () => {
+    puzzleCompleted = false;
+    createPuzzle(imageUrl);
+    document.getElementById('restartButton').style.display = 'none';
+    document.getElementById('message').textContent = '';
+  });
+
+  createPuzzle(imageUrl);
+</script>
+</body>
+</html>
