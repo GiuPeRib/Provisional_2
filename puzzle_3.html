@@ -5,19 +5,18 @@
   <title>Puzzle Game</title>
   <style>
     #puzzleContainer {
-      position: relative;
-      width: 100vw;
-      height: 100vh;
-      overflow: hidden;
-      display: flex;
-      justify-content: center;
-      align-items: center;
+      display: grid;
+      gap: 2px;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
     }
     .puzzlePiece {
       cursor: pointer;
       border: 1px solid #ccc;
       user-select: none;
-      position: absolute;
+      position: relative;
     }
     .selected {
       border: 2px solid red;
@@ -48,28 +47,31 @@
   <div id="puzzleContainer"></div>
   <div id="message"></div>
   <button id="restartButton">Ricomincia</button>
-  <div id="version">Versione: 1.8</div> <!-- Aggiungi la versione qui -->
+  <div id="version">Versione: 1.7</div> <!-- Aggiungi la versione qui -->
 
   <script>
     const imageUrl = 'https://github.com/GiuPeRib/Provisional_2/blob/main/Apparato%20di%20distillazione%20semplice%20-%20Copia.jpg?raw=true';
     let firstSelectedPiece = null;
     let secondSelectedPiece = null;
+    let pieceSize = 100; // Dimensione del pezzo del puzzle
+    let puzzleCompleted = false;
 
     function createPuzzle(imageUrl) {
       const puzzleContainer = document.getElementById('puzzleContainer');
       puzzleContainer.innerHTML = '';
-      const pieceSize = 100; // Dimensione del pezzo del puzzle
       const img = new Image();
       img.src = imageUrl;
       img.onload = function() {
         const scale = Math.min(window.innerWidth / img.width, window.innerHeight / img.height);
         const scaledWidth = img.width * scale;
         const scaledHeight = img.height * scale;
-        const cols = Math.ceil(scaledWidth / pieceSize);
-        const rows = Math.ceil(scaledHeight / pieceSize);
+        const cols = Math.floor(scaledWidth / pieceSize);
+        const rows = Math.floor(scaledHeight / pieceSize);
 
-        puzzleContainer.style.width = `${scaledWidth}px`;
-        puzzleContainer.style.height = `${scaledHeight}px`;
+        puzzleContainer.style.gridTemplateColumns = `repeat(${cols}, ${pieceSize}px)`;
+        puzzleContainer.style.gridTemplateRows = `repeat(${rows}, ${pieceSize}px)`;
+        puzzleContainer.style.width = `${cols * pieceSize}px`;
+        puzzleContainer.style.height = `${rows * pieceSize}px`;
 
         const pieces = [];
 
@@ -81,8 +83,6 @@
             piece.height = pieceSize;
             const context = piece.getContext('2d');
             context.drawImage(img, col * pieceSize / scale, row * pieceSize / scale, pieceSize / scale, pieceSize / scale, 0, 0, pieceSize, pieceSize);
-            piece.style.left = `${col * pieceSize}px`;
-            piece.style.top = `${row * pieceSize}px`;
             piece.dataset.position = `${row}-${col}`;
             pieces.push(piece);
           }
@@ -134,14 +134,12 @@
         // Scambia gli indici
         [sourcePiece.dataset.index, targetPiece.dataset.index] = [targetIndex, sourceIndex];
 
-        // Scambia le posizioni nel DOM
+        // Scambia i pezzi nel DOM
         const sourceNextSibling = sourcePiece.nextElementSibling;
         puzzleContainer.insertBefore(sourcePiece, targetPiece);
         puzzleContainer.insertBefore(targetPiece, sourceNextSibling);
       }
     }
-
-    let puzzleCompleted = false;
 
     function checkPuzzle() {
       const pieces = document.querySelectorAll('.puzzlePiece');
