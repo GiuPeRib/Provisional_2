@@ -33,13 +33,13 @@
   <div id="puzzleContainer"></div>
   <div id="message"></div>
   <button id="restartButton">Ricomincia</button>
-  <div id="version">Versione: 1.7</div> <!-- Aggiungi la versione qui -->
+  <div id="version">Versione: 1.8</div> <!-- Aggiungi la versione qui -->
 
 <script>
   const imageUrl = 'https://github.com/GiuPeRib/Provisional_2/blob/main/Apparato%20di%20distillazione%20semplice%20-%20Copia.jpg?raw=true'; // Sostituisci con il link alla tua immagine predefinita
   let draggedElement = null;
-  let touchStartX = 0;
-  let touchStartY = 0;
+  let offsetX = 0;
+  let offsetY = 0;
 
   function createPuzzle(imageUrl) {
     const puzzleContainer = document.getElementById('puzzleContainer');
@@ -62,7 +62,7 @@
           piece.classList.add('puzzlePiece');
           piece.width = pieceSize;
           piece.height = pieceSize;
-          piece.draggable = true;
+          piece.draggable = false; // Disabilita il drag nativo
           const context = piece.getContext('2d');
           context.drawImage(img, col * pieceSize, row * pieceSize, pieceSize, pieceSize, 0, 0, pieceSize, pieceSize);
           piece.dataset.position = `${row}-${col}`;
@@ -75,69 +75,42 @@
       pieces.forEach((piece, index) => {
         piece.dataset.index = index;
 
-        piece.addEventListener('dragstart', (event) => {
+        piece.addEventListener('pointerdown', (event) => {
           if (!puzzleCompleted) {
             draggedElement = event.target;
-            event.dataTransfer.setData('text/plain', draggedElement.dataset.index);
-          } else {
-            event.preventDefault();
+            offsetX = event.offsetX;
+            offsetY = event.offsetY;
+            draggedElement.setPointerCapture(event.pointerId);
           }
         });
 
-        piece.addEventListener('dragover', (event) => {
-          event.preventDefault();
-        });
-
-        piece.addEventListener('drop', (event) => {
-          event.preventDefault();
-          const targetElement = event.target.closest('.puzzlePiece');
-          const sourceIndex = draggedElement.dataset.index;
-          const targetIndex = targetElement.dataset.index;
-
-          if (draggedElement && targetElement && draggedElement !== targetElement && !puzzleCompleted) {
-            swapPieces(sourceIndex, targetIndex);
-            checkPuzzle(); // Verifica automatica dopo lo scambio
-          }
-        });
-
-        // Aggiungi supporto per i touch events
-        piece.addEventListener('touchstart', (event) => {
-          if (!puzzleCompleted) {
-            const touch = event.touches[0];
-            touchStartX = touch.clientX;
-            touchStartY = touch.clientY;
-            draggedElement = event.target;
-            draggedElement.style.position = 'absolute';
-            draggedElement.style.zIndex = '1000';
-          }
-        });
-
-        piece.addEventListener('touchmove', (event) => {
-          event.preventDefault();
+        piece.addEventListener('pointermove', (event) => {
           if (draggedElement) {
-            const touch = event.touches[0];
-            draggedElement.style.left = `${touch.pageX - touchStartX}px`;
-            draggedElement.style.top = `${touch.pageY - touchStartY}px`;
+            const pieceSize = draggedElement.width;
+            const containerRect = puzzleContainer.getBoundingClientRect();
+            draggedElement.style.position = 'absolute';
+            draggedElement.style.left = `${event.clientX - containerRect.left - offsetX}px`;
+            draggedElement.style.top = `${event.clientY - containerRect.top - offsetY}px`;
           }
         });
 
-        piece.addEventListener('touchend', (event) => {
-          event.preventDefault();
-          const touch = event.changedTouches[0];
-          const targetElement = document.elementFromPoint(touch.clientX, touch.clientY).closest('.puzzlePiece');
-          const sourceIndex = draggedElement.dataset.index;
-          const targetIndex = targetElement ? targetElement.dataset.index : null;
+        piece.addEventListener('pointerup', (event) => {
+          if (draggedElement) {
+            const targetElement = document.elementFromPoint(event.clientX, event.clientY).closest('.puzzlePiece');
+            const sourceIndex = draggedElement.dataset.index;
+            const targetIndex = targetElement ? targetElement.dataset.index : null;
 
-          if (draggedElement && targetElement && draggedElement !== targetElement && !puzzleCompleted) {
-            swapPieces(sourceIndex, targetIndex);
-            checkPuzzle(); // Verifica automatica dopo lo scambio
+            if (draggedElement && targetElement && draggedElement !== targetElement && !puzzleCompleted) {
+              swapPieces(sourceIndex, targetIndex);
+              checkPuzzle(); // Verifica automatica dopo lo scambio
+            }
+
+            draggedElement.style.position = '';
+            draggedElement.style.left = '';
+            draggedElement.style.top = '';
+            draggedElement.releasePointerCapture(event.pointerId);
+            draggedElement = null;
           }
-
-          draggedElement.style.position = '';
-          draggedElement.style.left = '';
-          draggedElement.style.top = '';
-          draggedElement.style.zIndex = '';
-          draggedElement = null;
         });
 
         puzzleContainer.appendChild(piece);
