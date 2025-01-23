@@ -43,6 +43,7 @@
   <div id="puzzleContainer"></div>
   <div id="message"></div>
   <button id="restartButton">Ricomincia</button>
+  <button id="solveButton">Risolvi</button>
   <div id="version">Versione: 1.7</div> <!-- Aggiungi la versione qui -->
 
   <script>
@@ -167,9 +168,6 @@
       document.getElementById('message').textContent = '';
     });
 
-    createPuzzle(imageUrl);
-
-    
   document.getElementById('solveButton').addEventListener('click', solvePuzzle);
 
   function solvePuzzle() {
@@ -195,9 +193,11 @@
     document.querySelectorAll('.puzzlePiece').forEach(piece => {
       piece.removeEventListener('click', handlePieceClick);
     });
-  </script>
+  }
 
-  <button id="solveButton">Risolvi</button>
+    createPuzzle(imageUrl);
+
+  </script>
 
 </body>
 </html>
