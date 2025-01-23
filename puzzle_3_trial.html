@@ -168,6 +168,36 @@
     });
 
     createPuzzle(imageUrl);
+
+    
+  document.getElementById('solveButton').addEventListener('click', solvePuzzle);
+
+  function solvePuzzle() {
+    const pieces = Array.from(document.querySelectorAll('.puzzlePiece'));
+    pieces.sort((a, b) => {
+      const [rowA, colA] = a.dataset.position.split('-').map(Number);
+      const [rowB, colB] = b.dataset.position.split('-').map(Number);
+      return rowA - rowB || colA - colB;
+    });
+
+    pieces.forEach((piece, index) => {
+      piece.dataset.index = index;
+    });
+
+    const puzzleContainer = document.getElementById('puzzleContainer');
+    puzzleContainer.innerHTML = '';
+    pieces.forEach(piece => {
+      puzzleContainer.appendChild(piece);
+    });
+
+    document.getElementById('message').textContent = 'Puzzle risolto automaticamente!';
+    document.getElementById('restartButton').style.display = 'block';
+    document.querySelectorAll('.puzzlePiece').forEach(piece => {
+      piece.removeEventListener('click', handlePieceClick);
+    });
   </script>
+
+  <button id="solveButton">Risolvi</button>
+
 </body>
 </html>
