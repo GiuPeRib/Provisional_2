@@ -37,6 +37,9 @@
       margin: 0;
       overflow: auto; /* Permette lo scorrimento della pagina */
     }
+    .highlight {
+    border: 2px solid red;
+    }
   </style>
 </head>
 <body>
@@ -44,6 +47,7 @@
   <div id="message"></div>
   <button id="restartButton">Ricomincia</button>
   <button id="solveButton">Risolvi</button>
+  <button id="highlightButton">Evidenzia pezzi errati</button>
   <div id="version">Versione: 1.7</div> <!-- Aggiungi la versione qui -->
 
   <script>
@@ -192,6 +196,25 @@
     document.getElementById('restartButton').style.display = 'block';
     document.querySelectorAll('.puzzlePiece').forEach(piece => {
       piece.removeEventListener('click', handlePieceClick);
+    });
+  }
+
+    
+  document.getElementById('highlightButton').addEventListener('click', highlightIncorrectPieces);
+
+  function highlightIncorrectPieces() {
+    const pieces = document.querySelectorAll('.puzzlePiece');
+    pieces.forEach(piece => {
+      const [originalRow, originalCol] = piece.dataset.position.split('-').map(Number);
+      const currentIndex = Number(piece.dataset.index);
+      const currentRow = Math.floor(currentIndex / Math.sqrt(pieces.length));
+      const currentCol = currentIndex % Math.sqrt(pieces.length);
+
+      if (originalRow !== currentRow || originalCol !== currentCol) {
+        piece.classList.add('highlight');
+      } else {
+        piece.classList.remove('highlight');
+      }
     });
   }
 
