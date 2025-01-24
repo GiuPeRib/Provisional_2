@@ -12,13 +12,15 @@
     display: inline-block;
     margin: 5px;
     background-color: #f9f9f9;
+    user-select: none; /* Prevent text selection */
   }
   .blank {
-    border: 2px solid #000; /* Increased border thickness */
-    min-width: 80px; /* Increased minimum width */
-    min-height: 30px; /* Increased minimum height */
+    border: 2px solid #000;
+    min-width: 80px;
+    min-height: 30px;
     display: inline-block;
     margin: 5px;
+    user-select: none; /* Prevent text selection */
   }
   .dragging {
     opacity: 0.5; /* Visual feedback for dragging */
@@ -44,30 +46,47 @@
       targetElement.innerHTML = droppedElement.innerHTML;
       droppedElement.style.visibility = "hidden"; // Makes the dropped word disappear as a visual feedback
     }
+
+    if (droppedElement) {
+      droppedElement.classList.remove('dragging');
+    }
   }
 
-  document.addEventListener("touchstart", function(event) {
+  function touchStart(event) {
     if (event.target.classList.contains('word')) {
-      event.target.classList.add('dragging');
-      event.dataTransfer = event.dataTransfer || {};
-      event.dataTransfer.setData("text", event.target.id);
+      var target = event.target;
+      event.dataTransfer = event.dataTransfer || {
+        setData: function(key, value) {
+          this.data = this.data || {};
+          this.data[key] = value;
+        },
+        getData: function(key) {
+          return this.data[key];
+        }
+      };
+      event.dataTransfer.setData("text", target.id);
+      target.classList.add('dragging');
+      event.preventDefault();
     }
-  });
+  }
 
-  document.addEventListener("touchend", function(event) {
-    if (event.target.classList.contains('blank')) {
-      var data = document.querySelector('.dragging');
-      if (data) {
-        event.target.innerHTML = data.innerHTML;
-        data.style.visibility = "hidden";
-      }
+  function touchEnd(event) {
+    var target = document.elementFromPoint(event.changedTouches[0].clientX, event.changedTouches[0].clientY);
+    var data = document.querySelector('.dragging');
+    if (target && target.classList.contains('blank')) {
+      target.innerHTML = data.innerHTML;
+      data.style.visibility = "hidden";
     }
-    
-    var draggedElement = document.querySelector('.dragging');
-    if (draggedElement) {
-      draggedElement.classList.remove('dragging');
+
+    if (data) {
+      data.classList.remove('dragging');
     }
-  });
+
+    event.preventDefault();
+  }
+
+  document.addEventListener("touchstart", touchStart, false);
+  document.addEventListener("touchend", touchEnd, false);
 </script>
 </head>
 <body>
