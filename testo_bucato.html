@@ -12,37 +12,22 @@
     display: inline-block;
     margin: 5px;
     background-color: #f9f9f9;
-    user-select: none;
   }
   .blank {
-    border: 2px solid #000;
-    min-width: 80px;
-    min-height: 30px;
+    border: 2px solid #000; /* Thick border to increase sensitive area */
+    min-width: 80px; /* Increased minimum width */
+    min-height: 30px; /* Increased minimum height */
     display: inline-block;
     margin: 5px;
   }
-  .dragging {
-    opacity: 0.5;
-    position: absolute;
-    z-index: 1000;
-  }
 </style>
 <script>
-  let currentDraggedElement = null;
-
   function allowDrop(event) {
     event.preventDefault();
   }
 
   function drag(event) {
     event.dataTransfer.setData("text", event.target.id);
-    event.target.classList.add('dragging');
-    currentDraggedElement = event.target;
-  }
-
-  function dragEnd(event) {
-    event.target.classList.remove('dragging');
-    currentDraggedElement = null;
   }
 
   function drop(event) {
@@ -53,54 +38,49 @@
 
     if (targetElement.classList.contains('blank')) {
       targetElement.innerHTML = droppedElement.innerHTML;
-      droppedElement.style.visibility = "hidden";
-      droppedElement.classList.remove('dragging');
-      droppedElement.classList.add('locked'); // Applica una classe per bloccare il testo
+      droppedElement.style.visibility = "hidden"; // Makes the dropped word disappear as a visual feedback
     }
   }
 
-  function touchMove(event) {
+  function handleTouchStart(event) {
+    event.dataTransfer.setData("text", event.target.id);
+  }
+
+  function handleTouchMove(event) {
     event.preventDefault();
-    const touchLocation = event.targetTouches[0];
-    if (currentDraggedElement) {
-      currentDraggedElement.style.left = `${touchLocation.pageX - currentDraggedElement.offsetWidth / 2}px`;
-      currentDraggedElement.style.top = `${touchLocation.pageY - currentDraggedElement.offsetHeight / 2}px`;
+    var touch = event.touches[0];
+    var targetElement = document.elementFromPoint(touch.clientX, touch.clientY);
+
+    if (targetElement.classList.contains('blank')) {
+      var data = event.dataTransfer.getData("text");
+      var droppedElement = document.getElementById(data);
+
+      targetElement.innerHTML = droppedElement.innerHTML;
+      droppedElement.style.visibility = "hidden"; // Hide the word after dropping
     }
   }
 
-  function touchStart(event) {
-    if (event.target.className.includes("word") && !event.target.classList.contains('locked')) {
-      currentDraggedElement = event.target;
-      currentDraggedElement.classList.add('dragging');
-      document.body.appendChild(currentDraggedElement);
+  window.addEventListener('touchstart', function(event) {
+    var target = event.target;
+    if (target.classList.contains('word')) {
+      handleTouchStart(event);
     }
-  }
+  }, false);
 
-  function touchEnd(event) {
-    event.preventDefault();
-    const target = document.elementFromPoint(event.changedTouches[0].clientX, event.changedTouches[0].clientY);
-    if (target && target.classList.contains('blank') && currentDraggedElement) {
-      target.innerHTML = currentDraggedElement.innerHTML;
-      currentDraggedElement.style.visibility = "hidden";
-      currentDraggedElement.classList.remove('dragging');
-      currentDraggedElement.classList.add('locked');
-      currentDraggedElement = null;
+  window.addEventListener('touchmove', function(event) {
+    var target = event.target;
+    if (target.classList.contains('blank')) {
+      handleTouchMove(event);
     }
-  }
-
-  document.addEventListener("dragstart", drag, false);
-  document.addEventListener("dragend", dragEnd, false);
-  document.addEventListener("touchmove", touchMove, false);
-  document.addEventListener("touchstart", touchStart, false);
-  document.addEventListener("touchend", touchEnd, false);
+  }, false);
 </script>
 </head>
 <body>
 <h3>Completa il Testo</h3>
 <p>La distillazione <span class="blank" ondrop="drop(event)" ondragover="allowDrop(event)"></span> è una tecnica di separazione di miscugli <span class="blank" ondrop="drop(event)" ondragover="allowDrop(event)"></span>.</p>
 <div>
-  <span id="word1" class="word" draggable="true">semplice</span>
-  <span id="word2" class="word" draggable="true">omogenei</span>
+  <span id="word1" class="word" draggable="true" ondragstart="drag(event)">semplice</span>
+  <span id="word2" class="word" draggable="true" ondragstart="drag(event)">omogenei</span>
 </div>
 </body>
 </html>
