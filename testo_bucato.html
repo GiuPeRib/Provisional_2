@@ -8,39 +8,41 @@
   .word {
     border: 1px solid #000;
     padding: 5px;
-    cursor: grab;
+    cursor: pointer;
     display: inline-block;
     margin: 5px;
     background-color: #f9f9f9;
-    user-select: none;
+    user-select: none; /* Prevent text selection */
   }
   .blank {
-    border: 2px solid #000;
-    min-width: 80px;
-    min-height: 30px;
+    border: 2px solid #000; /* Thick border to increase sensitive area */
+    min-width: 80px; /* Increased minimum width */
+    min-height: 30px; /* Increased minimum height */
     display: inline-block;
     margin: 5px;
-    user-select: none;
   }
   .dragging {
-    opacity: 0.5;
+    opacity: 0.5; /* Visual feedback for dragging */
+    position: absolute;
+    z-index: 1000;
   }
 </style>
 <script>
-  let draggedElement = null;
+  let currentDraggedElement = null;
 
   function allowDrop(event) {
     event.preventDefault();
   }
 
   function drag(event) {
-    draggedElement = event.target;
     event.dataTransfer.setData("text", event.target.id);
-    event.target.style.opacity = 0.5;
+    event.target.classList.add('dragging');
+    currentDraggedElement = event.target;
   }
 
   function dragEnd(event) {
-    event.target.style.opacity = "";
+    event.target.classList.remove('dragging');
+    currentDraggedElement = null;
   }
 
   function drop(event) {
@@ -50,32 +52,44 @@
     var targetElement = event.target;
 
     if (targetElement.classList.contains('blank')) {
-      targetElement.style.opacity = "";
       targetElement.innerHTML = droppedElement.innerHTML;
       droppedElement.style.visibility = "hidden";
     }
+    droppedElement.classList.remove('dragging');
   }
 
   function touchMove(event) {
+    event.preventDefault();
     const touchLocation = event.targetTouches[0];
-    draggedElement.style.position = "absolute";
-    draggedElement.style.left = touchLocation.pageX + "px";
-    draggedElement.style.top = touchLocation.pageY + "px";
+    if (currentDraggedElement) {
+      currentDraggedElement.style.left = `${touchLocation.pageX - currentDraggedElement.offsetWidth / 2}px`;
+      currentDraggedElement.style.top = `${touchLocation.pageY - currentDraggedElement.offsetHeight / 2}px`;
+    }
+  }
+
+  function touchStart(event) {
+    if (event.target.className.includes("word")) {
+      currentDraggedElement = event.target;
+      currentDraggedElement.classList.add('dragging');
+      document.body.appendChild(currentDraggedElement);
+    }
   }
 
   function touchEnd(event) {
+    event.preventDefault();
     const target = document.elementFromPoint(event.changedTouches[0].clientX, event.changedTouches[0].clientY);
-    if (target && target.classList.contains('blank')) {
-      target.innerHTML = draggedElement.innerHTML;
-      draggedElement.style.visibility = "hidden";
+    if (target && target.classList.contains('blank') && currentDraggedElement) {
+      target.innerHTML = currentDraggedElement.innerHTML;
+      currentDraggedElement.style.visibility = "hidden";
+      currentDraggedElement.classList.remove('dragging');
+      currentDraggedElement = null;
     }
-    draggedElement.style.position = "static";
-    draggedElement = null;
   }
 
   document.addEventListener("dragstart", drag, false);
   document.addEventListener("dragend", dragEnd, false);
   document.addEventListener("touchmove", touchMove, false);
+  document.addEventListener("touchstart", touchStart, false);
   document.addEventListener("touchend", touchEnd, false);
 </script>
 </head>
