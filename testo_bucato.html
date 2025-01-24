@@ -21,94 +21,42 @@
     margin: 5px;
   }
 </style>
-  
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.3/jquery.ui.touch-punch.min.js"></script>
 <script>
- function allowDrop(event) {
-  event.preventDefault();
-}
-
-function drag(event) {
-  event.dataTransfer.setData("text", event.target.id);
-}
-
-function drop(event) {
-  event.preventDefault();
-  var data = event.dataTransfer.getData("text");
-  var droppedElement = document.getElementById(data);
-  var targetElement = event.target;
-
-  if (targetElement.classList.contains('blank')) {
-    var previousContent = targetElement.innerHTML;
-    if (previousContent !== "") {
-      // Find the word with the same text in the word pool and make it visible again
-      var wordElements = document.getElementsByClassName('word');
-      for (var i = 0; i < wordElements.length; i++) {
-        if (wordElements[i].innerHTML === previousContent) {
-          wordElements[i].style.visibility = "visible";
-          break;
-        }
+$(document).ready(function() {
+  $(".word").draggable({
+    revert: "invalid"
+  });
+  
+  $(".blank").droppable({
+    accept: ".word",
+    drop: function(event, ui) {
+      var droppedElement = ui.draggable;
+      var previousContent = $(this).text().trim();
+      
+      // Make previously dropped word visible again
+      if (previousContent !== "") {
+        $(".word").filter(function() {
+          return $(this).text() === previousContent;
+        }).css("visibility", "visible");
       }
+      
+      // Update content in the blank
+      $(this).text(droppedElement.text());
+      droppedElement.css("visibility", "hidden");
     }
-
-    // Update content in the blank
-    targetElement.innerHTML = droppedElement.innerHTML;
-    droppedElement.style.visibility = "hidden";
-  }
-}
-
-function handleTouchStart(event) {
-  event.dataTransfer.setData("text", event.target.id);
-}
-
-function handleTouchMove(event) {
-  event.preventDefault();
-  var touch = event.touches[0];
-  var targetElement = document.elementFromPoint(touch.clientX, touch.clientY);
-
-  if (targetElement.classList.contains('blank')) {
-    var previousContent = targetElement.innerHTML;
-    if (previousContent !== "") {
-      // Find the word with the same text in the word pool and make it visible again
-      var wordElements = document.getElementsByClassName('word');
-      for (var i = 0; i < wordElements.length; i++) {
-        if (wordElements[i].innerHTML === previousContent) {
-          wordElements[i].style.visibility = "visible";
-          break;
-        }
-      }
-    }
-
-    var data = event.dataTransfer.getData("text");
-    var droppedElement = document.getElementById(data);
-
-    // Update content in the blank
-    targetElement.innerHTML = droppedElement.innerHTML;
-    droppedElement.style.visibility = "hidden";
-  }
-}
-
-window.addEventListener('touchstart', function(event) {
-  var target = event.target;
-  if (target.classList.contains('word')) {
-    handleTouchStart(event);
-  }
-}, false);
-
-window.addEventListener('touchmove', function(event) {
-  var target = event.target;
-  if (target.classList.contains('blank')) {
-    handleTouchMove(event);
-  }
-}, false);
+  });
+});
 </script>
-
 </head>
 <body>
 <h3>Completa il Testo</h3>
 <p>La distillazione <span class="blank" ondrop="drop(event)" ondragover="allowDrop(event)"></span> è una tecnica di separazione di miscugli <span class="blank" ondrop="drop(event)" ondragover="allowDrop(event)"></span>.</p>
 <div>
-  <span id="word1" class="word" draggable="true" ondragstart="drag(event)" ontouchstart="touchStart(event)" ontouchend="touchEnd(event)">semplice</span>
-  <span id="word2" class="word" draggable="true" ondragstart="drag(event)" ontouchstart="touchStart(event)" ontouchend="touchEnd(event)">omogenei</span>
+  <span id="word1" class="word" draggable="true">semplice</span>
+  <span id="word2" class="word" draggable="true">omogenei</span>
 </div>
 </body>
 </html>
