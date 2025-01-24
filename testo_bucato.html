@@ -16,14 +16,15 @@
     z-index: 1;
   }
   .blank {
-    border: 2px solid #000;
+    border: 2px solid #000; 
     min-width: 80px;
     min-height: 30px;
     display: inline-block;
     margin: 5px;
     position: relative;
+    line-height: 30px; /* Ensure vertical alignment */
   }
-  .blank .remove {
+  .remove {
     color: red;
     cursor: pointer;
     position: absolute;
@@ -37,18 +38,31 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.3/jquery.ui.touch-punch.min.js"></script>
 <script>
-$(document).ready(function() {
+$(function() {
   $(".word").draggable({
     revert: "invalid",
-    containment: "body"
+    containment: "document",
+    start: function() {
+      $(".blank").each(function() {
+        if ($(this).text().trim() === $(this).data("word")) {
+          $(this).data("word", "");
+          $(".word").each(function() {
+            if ($(this).text() === $(this).text().trim()) {
+              $(this).css("visibility", "visible");
+            }
+          });
+        }
+      });
+    }
   });
 
   $(".blank").droppable({
     accept: ".word",
     drop: function(event, ui) {
       var droppedElement = ui.draggable;
-      var previousContent = $(this).find('.word').text();
-      
+      var blankElement = $(this);
+      var previousContent = blankElement.data("word");
+    
       // Make previously dropped word visible again
       if (previousContent !== "") {
         $(".word").filter(function() {
@@ -56,32 +70,29 @@ $(document).ready(function() {
         }).css("visibility", "visible");
       }
 
-      // Align the dropped element within the blank
-      droppedElement.detach().css({top: 0, left: 0}).appendTo($(this));
+      // Update content in the blank
+      blankElement.empty().append(droppedElement.text()).css("line-height", "30px");
+      blankElement.data("word", droppedElement.text());
+      droppedElement.css("visibility", "hidden");
 
       // Show the remove button
-      $(this).find('.remove').show();
+      var removeButton = $('<span class="remove">X</span>').click(function() {
+        $(this).parent().empty().data("word", "");
+        droppedElement.css("visibility", "visible");
+      });
+      blankElement.append(removeButton);
     }
-  });
-
-  // Remove the word from the blank
-  $(".blank").on('click', '.remove', function() {
-    var blank = $(this).parent();
-    var word = blank.find('.word');
-    
-    word.css("visibility", "visible").detach().appendTo(".word-pool");
-    blank.empty().append('<span class="remove">X</span>');
   });
 });
 </script>
 </head>
 <body>
 <h3>Completa il Testo</h3>
-<p>La distillazione <span class="blank" ondrop="drop(event)" ondragover="allowDrop(event)"><span class="remove">X</span></span> è una tecnica di separazione di miscugli <span class="blank" ondrop="drop(event)" ondragover="allowDrop(event)"><span class="remove">X</span></span>.</p>
+<p>La distillazione <span class="blank" data-word="" ondrop="drop(event)" ondragover="allowDrop(event)"></span> è una tecnica di separazione di miscugli <span class="blank" data-word="" ondrop="drop(event)" ondragover="allowDrop(event)"></span>.</p>
 <div class="word-pool">
-  <span id="word1" class="word" draggable="true">semplice</span>
-  <span id="word2" class="word" draggable="true">omogenei</span>
+  <span id="word1" class="word">semplice</span>
+  <span id="word2" class="word">omogenei</span>
 </div>
-  <p>V.2</p>
+<p>V.3</p>
 </body>
 </html>
