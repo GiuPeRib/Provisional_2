@@ -42,35 +42,42 @@
     }
   }
 
-  function handleTouchStart(event) {
-    event.dataTransfer.setData("text", event.target.id);
+  // Custom functions to handle touch events
+  function touchStart(event) {
+    event.dataTransfer = {
+      getData: function() {
+        return event.target.id;
+      },
+      setData: function() {
+        return;
+      }
+    };
+    event.target.classList.add('dragging');
   }
 
-  function handleTouchMove(event) {
-    event.preventDefault();
-    var touch = event.touches[0];
-    var targetElement = document.elementFromPoint(touch.clientX, touch.clientY);
+  function touchEnd(event) {
+    var touch = event.changedTouches[0];
+    var element = document.elementFromPoint(touch.clientX, touch.clientY);
 
-    if (targetElement.classList.contains('blank')) {
-      var data = event.dataTransfer.getData("text");
+    if (element.classList.contains('blank')) {
+      var data = event.target.id;
       var droppedElement = document.getElementById(data);
 
-      targetElement.innerHTML = droppedElement.innerHTML;
-      droppedElement.style.visibility = "hidden"; // Hide the word after dropping
+      element.innerHTML = droppedElement.innerHTML;
+      droppedElement.style.visibility = "hidden";
     }
+    event.target.classList.remove('dragging');
   }
 
-  window.addEventListener('touchstart', function(event) {
-    var target = event.target;
-    if (target.classList.contains('word')) {
-      handleTouchStart(event);
+  document.addEventListener('touchstart', function(event) {
+    if (event.target.classList.contains('word')) {
+      touchStart(event);
     }
   }, false);
 
-  window.addEventListener('touchmove', function(event) {
-    var target = event.target;
-    if (target.classList.contains('blank')) {
-      handleTouchMove(event);
+  document.addEventListener('touchend', function(event) {
+    if (event.target.classList.contains('dragging')) {
+      touchEnd(event);
     }
   }, false);
 </script>
@@ -79,8 +86,8 @@
 <h3>Completa il Testo</h3>
 <p>La distillazione <span class="blank" ondrop="drop(event)" ondragover="allowDrop(event)"></span> è una tecnica di separazione di miscugli <span class="blank" ondrop="drop(event)" ondragover="allowDrop(event)"></span>.</p>
 <div>
-  <span id="word1" class="word" draggable="true" ondragstart="drag(event)">semplice</span>
-  <span id="word2" class="word" draggable="true" ondragstart="drag(event)">omogenei</span>
+  <span id="word1" class="word" draggable="true" ondragstart="drag(event)" ontouchstart="touchStart(event)" ontouchend="touchEnd(event)">semplice</span>
+  <span id="word2" class="word" draggable="true" ondragstart="drag(event)" ontouchstart="touchStart(event)" ontouchend="touchEnd(event)">omogenei</span>
 </div>
 </body>
 </html>
