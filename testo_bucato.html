@@ -12,17 +12,17 @@
     display: inline-block;
     margin: 5px;
     background-color: #f9f9f9;
-    user-select: none; /* Prevent text selection */
+    user-select: none;
   }
   .blank {
-    border: 2px solid #000; /* Thick border to increase sensitive area */
-    min-width: 80px; /* Increased minimum width */
-    min-height: 30px; /* Increased minimum height */
+    border: 2px solid #000;
+    min-width: 80px;
+    min-height: 30px;
     display: inline-block;
     margin: 5px;
   }
   .dragging {
-    opacity: 0.5; /* Visual feedback for dragging */
+    opacity: 0.5;
     position: absolute;
     z-index: 1000;
   }
@@ -54,8 +54,9 @@
     if (targetElement.classList.contains('blank')) {
       targetElement.innerHTML = droppedElement.innerHTML;
       droppedElement.style.visibility = "hidden";
+      droppedElement.classList.remove('dragging');
+      droppedElement.classList.add('locked'); // Applica una classe per bloccare il testo
     }
-    droppedElement.classList.remove('dragging');
   }
 
   function touchMove(event) {
@@ -68,7 +69,7 @@
   }
 
   function touchStart(event) {
-    if (event.target.className.includes("word")) {
+    if (event.target.className.includes("word") && !event.target.classList.contains('locked')) {
       currentDraggedElement = event.target;
       currentDraggedElement.classList.add('dragging');
       document.body.appendChild(currentDraggedElement);
@@ -82,6 +83,7 @@
       target.innerHTML = currentDraggedElement.innerHTML;
       currentDraggedElement.style.visibility = "hidden";
       currentDraggedElement.classList.remove('dragging');
+      currentDraggedElement.classList.add('locked');
       currentDraggedElement = null;
     }
   }
