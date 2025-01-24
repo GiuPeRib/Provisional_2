@@ -14,11 +14,14 @@
     background-color: #f9f9f9;
   }
   .blank {
-    border: 2px solid #000; /* Thick border to increase sensitive area */
+    border: 2px solid #000; /* Increased border thickness */
     min-width: 80px; /* Increased minimum width */
     min-height: 30px; /* Increased minimum height */
     display: inline-block;
     margin: 5px;
+  }
+  .dragging {
+    opacity: 0.5; /* Visual feedback for dragging */
   }
 </style>
 <script>
@@ -28,6 +31,7 @@
 
   function drag(event) {
     event.dataTransfer.setData("text", event.target.id);
+    event.target.classList.add('dragging');
   }
 
   function drop(event) {
@@ -41,6 +45,29 @@
       droppedElement.style.visibility = "hidden"; // Makes the dropped word disappear as a visual feedback
     }
   }
+
+  document.addEventListener("touchstart", function(event) {
+    if (event.target.classList.contains('word')) {
+      event.target.classList.add('dragging');
+      event.dataTransfer = event.dataTransfer || {};
+      event.dataTransfer.setData("text", event.target.id);
+    }
+  });
+
+  document.addEventListener("touchend", function(event) {
+    if (event.target.classList.contains('blank')) {
+      var data = document.querySelector('.dragging');
+      if (data) {
+        event.target.innerHTML = data.innerHTML;
+        data.style.visibility = "hidden";
+      }
+    }
+    
+    var draggedElement = document.querySelector('.dragging');
+    if (draggedElement) {
+      draggedElement.classList.remove('dragging');
+    }
+  });
 </script>
 </head>
 <body>
