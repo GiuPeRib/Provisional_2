@@ -12,13 +12,25 @@
     display: inline-block;
     margin: 5px;
     background-color: #f9f9f9;
+    position: relative;
+    z-index: 1;
   }
   .blank {
-    border: 2px solid #000; /* Thick border to increase sensitive area */
-    min-width: 80px; /* Increased minimum width */
-    min-height: 30px; /* Increased minimum height */
+    border: 2px solid #000;
+    min-width: 80px;
+    min-height: 30px;
     display: inline-block;
     margin: 5px;
+    position: relative;
+  }
+  .blank .remove {
+    color: red;
+    cursor: pointer;
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    font-size: 14px;
+    display: none;
   }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
@@ -27,14 +39,15 @@
 <script>
 $(document).ready(function() {
   $(".word").draggable({
-    revert: "invalid"
+    revert: "invalid",
+    containment: "body"
   });
-  
+
   $(".blank").droppable({
     accept: ".word",
     drop: function(event, ui) {
       var droppedElement = ui.draggable;
-      var previousContent = $(this).text().trim();
+      var previousContent = $(this).find('.word').text();
       
       // Make previously dropped word visible again
       if (previousContent !== "") {
@@ -42,19 +55,30 @@ $(document).ready(function() {
           return $(this).text() === previousContent;
         }).css("visibility", "visible");
       }
-      
-      // Update content in the blank
-      $(this).text(droppedElement.text());
-      droppedElement.css("visibility", "hidden");
+
+      // Align the dropped element within the blank
+      droppedElement.detach().css({top: 0, left: 0}).appendTo($(this));
+
+      // Show the remove button
+      $(this).find('.remove').show();
     }
+  });
+
+  // Remove the word from the blank
+  $(".blank").on('click', '.remove', function() {
+    var blank = $(this).parent();
+    var word = blank.find('.word');
+    
+    word.css("visibility", "visible").detach().appendTo(".word-pool");
+    blank.empty().append('<span class="remove">X</span>');
   });
 });
 </script>
 </head>
 <body>
 <h3>Completa il Testo</h3>
-<p>La distillazione <span class="blank" ondrop="drop(event)" ondragover="allowDrop(event)"></span> è una tecnica di separazione di miscugli <span class="blank" ondrop="drop(event)" ondragover="allowDrop(event)"></span>.</p>
-<div>
+<p>La distillazione <span class="blank" ondrop="drop(event)" ondragover="allowDrop(event)"><span class="remove">X</span></span> è una tecnica di separazione di miscugli <span class="blank" ondrop="drop(event)" ondragover="allowDrop(event)"><span class="remove">X</span></span>.</p>
+<div class="word-pool">
   <span id="word1" class="word" draggable="true">semplice</span>
   <span id="word2" class="word" draggable="true">omogenei</span>
 </div>
