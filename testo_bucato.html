@@ -13,16 +13,16 @@
     margin: 5px;
     background-color: #f9f9f9;
     position: relative;
-    z-index: 1;
+    text-align: center; /* Ensures horizontal alignment within each word element */
   }
   .blank {
-    border: 2px solid #000; 
+    border: 2px solid #000;
     min-width: 80px;
-    min-height: 30px;
     display: inline-block;
     margin: 5px;
+    height: 30px; /* Ensures consistent height */
+    vertical-align: top; /* Ensure alignment with surrounding text */
     position: relative;
-    line-height: 30px; /* Ensure vertical alignment */
   }
   .remove {
     color: red;
@@ -42,17 +42,12 @@ $(function() {
   $(".word").draggable({
     revert: "invalid",
     containment: "document",
-    start: function() {
-      $(".blank").each(function() {
-        if ($(this).text().trim() === $(this).data("word")) {
-          $(this).data("word", "");
-          $(".word").each(function() {
-            if ($(this).text() === $(this).text().trim()) {
-              $(this).css("visibility", "visible");
-            }
-          });
-        }
-      });
+    start: function(event, ui) {
+      // While dragging, reattach previously placed word back to word pool
+      if ($(this).parent().hasClass("blank")) {
+        $(this).css("visibility", "visible");
+        $(this).parent().empty().data("word", "");
+      }
     }
   });
 
@@ -62,7 +57,7 @@ $(function() {
       var droppedElement = ui.draggable;
       var blankElement = $(this);
       var previousContent = blankElement.data("word");
-    
+
       // Make previously dropped word visible again
       if (previousContent !== "") {
         $(".word").filter(function() {
@@ -70,17 +65,20 @@ $(function() {
         }).css("visibility", "visible");
       }
 
-      // Update content in the blank
-      blankElement.empty().append(droppedElement.text()).css("line-height", "30px");
+      // Update content in the blank and align it
+      droppedElement.detach().css({
+        position: "relative",
+        top: 0,
+        left: 0
+      }).appendTo(blankElement);
       blankElement.data("word", droppedElement.text());
-      droppedElement.css("visibility", "hidden");
 
       // Show the remove button
       var removeButton = $('<span class="remove">X</span>').click(function() {
+        $(this).parent().find(".word").css("visibility", "visible").detach().appendTo(".word-pool");
         $(this).parent().empty().data("word", "");
-        droppedElement.css("visibility", "visible");
       });
-      blankElement.append(removeButton);
+      blankElement.empty().append(droppedElement).append(removeButton).find('.remove').show();
     }
   });
 });
@@ -88,11 +86,11 @@ $(function() {
 </head>
 <body>
 <h3>Completa il Testo</h3>
-<p>La distillazione <span class="blank" data-word="" ondrop="drop(event)" ondragover="allowDrop(event)"></span> è una tecnica di separazione di miscugli <span class="blank" data-word="" ondrop="drop(event)" ondragover="allowDrop(event)"></span>.</p>
+<p>La distillazione <span class="blank" data-word=""></span> è una tecnica di separazione di miscugli <span class="blank" data-word=""></span>.</p>
 <div class="word-pool">
   <span id="word1" class="word">semplice</span>
   <span id="word2" class="word">omogenei</span>
 </div>
-<p>V.3</p>
+<p>V.4</p>
 </body>
 </html>
