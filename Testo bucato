@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Completa il Testo</title>
+<style>
+  .word {
+    border: 1px solid #000;
+    padding: 5px;
+    cursor: pointer;
+    display: inline-block;
+    margin: 5px;
+    background-color: #f9f9f9;
+  }
+  .blank {
+    border: 2px solid #000; /* Thick border to increase sensitive area */
+    min-width: 80px; /* Increased minimum width */
+    min-height: 30px; /* Increased minimum height */
+    display: inline-block;
+    margin: 5px;
+  }
+</style>
+<script>
+  function allowDrop(event) {
+    event.preventDefault();
+  }
+
+  function drag(event) {
+    event.dataTransfer.setData("text", event.target.id);
+  }
+
+  function drop(event) {
+    event.preventDefault();
+    var data = event.dataTransfer.getData("text");
+    var droppedElement = document.getElementById(data);
+    var targetElement = event.target;
+
+    if (targetElement.classList.contains('blank')) {
+      targetElement.innerHTML = droppedElement.innerHTML;
+      droppedElement.style.visibility = "hidden"; // Makes the dropped word disappear as a visual feedback
+    }
+  }
+</script>
+</head>
+<body>
+<h3>Completa il Testo</h3>
+<p>La distillazione <span class="blank" ondrop="drop(event)" ondragover="allowDrop(event)"></span> è una tecnica di separazione di miscugli <span class="blank" ondrop="drop(event)" ondragover="allowDrop(event)"></span>.</p>
+<div>
+  <span id="word1" class="word" draggable="true" ondragstart="drag(event)">semplice</span>
+  <span id="word2" class="word" draggable="true" ondragstart="drag(event)">omogenei</span>
+</div>
+</body>
+</html>
