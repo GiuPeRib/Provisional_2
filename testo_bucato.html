@@ -21,66 +21,87 @@
     margin: 5px;
   }
 </style>
+  
 <script>
-  function allowDrop(event) {
-    event.preventDefault();
-  }
+ function allowDrop(event) {
+  event.preventDefault();
+}
 
-  function drag(event) {
-    event.dataTransfer.setData("text", event.target.id);
-  }
+function drag(event) {
+  event.dataTransfer.setData("text", event.target.id);
+}
 
-  function drop(event) {
-    event.preventDefault();
+function drop(event) {
+  event.preventDefault();
+  var data = event.dataTransfer.getData("text");
+  var droppedElement = document.getElementById(data);
+  var targetElement = event.target;
+
+  if (targetElement.classList.contains('blank')) {
+    var previousContent = targetElement.innerHTML;
+    if (previousContent !== "") {
+      // Find the word with the same text in the word pool and make it visible again
+      var wordElements = document.getElementsByClassName('word');
+      for (var i = 0; i < wordElements.length; i++) {
+        if (wordElements[i].innerHTML === previousContent) {
+          wordElements[i].style.visibility = "visible";
+          break;
+        }
+      }
+    }
+
+    // Update content in the blank
+    targetElement.innerHTML = droppedElement.innerHTML;
+    droppedElement.style.visibility = "hidden";
+  }
+}
+
+function handleTouchStart(event) {
+  event.dataTransfer.setData("text", event.target.id);
+}
+
+function handleTouchMove(event) {
+  event.preventDefault();
+  var touch = event.touches[0];
+  var targetElement = document.elementFromPoint(touch.clientX, touch.clientY);
+
+  if (targetElement.classList.contains('blank')) {
+    var previousContent = targetElement.innerHTML;
+    if (previousContent !== "") {
+      // Find the word with the same text in the word pool and make it visible again
+      var wordElements = document.getElementsByClassName('word');
+      for (var i = 0; i < wordElements.length; i++) {
+        if (wordElements[i].innerHTML === previousContent) {
+          wordElements[i].style.visibility = "visible";
+          break;
+        }
+      }
+    }
+
     var data = event.dataTransfer.getData("text");
     var droppedElement = document.getElementById(data);
-    var targetElement = event.target;
 
-    if (targetElement.classList.contains('blank')) {
-      targetElement.innerHTML = droppedElement.innerHTML;
-      droppedElement.style.visibility = "hidden"; // Makes the dropped word disappear as a visual feedback
-    }
+    // Update content in the blank
+    targetElement.innerHTML = droppedElement.innerHTML;
+    droppedElement.style.visibility = "hidden";
   }
+}
 
-  // Custom functions to handle touch events
-  function touchStart(event) {
-    event.dataTransfer = {
-      getData: function() {
-        return event.target.id;
-      },
-      setData: function() {
-        return;
-      }
-    };
-    event.target.classList.add('dragging');
+window.addEventListener('touchstart', function(event) {
+  var target = event.target;
+  if (target.classList.contains('word')) {
+    handleTouchStart(event);
   }
+}, false);
 
-  function touchEnd(event) {
-    var touch = event.changedTouches[0];
-    var element = document.elementFromPoint(touch.clientX, touch.clientY);
-
-    if (element.classList.contains('blank')) {
-      var data = event.target.id;
-      var droppedElement = document.getElementById(data);
-
-      element.innerHTML = droppedElement.innerHTML;
-      droppedElement.style.visibility = "hidden";
-    }
-    event.target.classList.remove('dragging');
+window.addEventListener('touchmove', function(event) {
+  var target = event.target;
+  if (target.classList.contains('blank')) {
+    handleTouchMove(event);
   }
-
-  document.addEventListener('touchstart', function(event) {
-    if (event.target.classList.contains('word')) {
-      touchStart(event);
-    }
-  }, false);
-
-  document.addEventListener('touchend', function(event) {
-    if (event.target.classList.contains('dragging')) {
-      touchEnd(event);
-    }
-  }, false);
+}, false);
 </script>
+
 </head>
 <body>
 <h3>Completa il Testo</h3>
