@@ -103,26 +103,25 @@
       };
     }
 
-    function swapPieces(sourceIndex, targetIndex) {
+   function swapPieces(sourceIndex, targetIndex) {
   const puzzleContainer = document.getElementById('puzzleContainer');
   const pieces = Array.from(puzzleContainer.children);
-
-  // Get the actual nodes
   const sourcePiece = pieces.find(piece => piece.dataset.index === sourceIndex);
   const targetPiece = pieces.find(piece => piece.dataset.index === targetIndex);
 
-  // Swap the positions in the DOM:
-  // Clone nodes to avoid losing event listeners
-  const sourceClone = sourcePiece.cloneNode(true);
-  const targetClone = targetPiece.cloneNode(true);
+  // Swap image data
+  const sourceCtx = sourcePiece.getContext('2d');
+  const targetCtx = targetPiece.getContext('2d');
+  const sourceImageData = sourceCtx.getImageData(0, 0, sourcePiece.width, sourcePiece.height);
+  const targetImageData = targetCtx.getImageData(0, 0, targetPiece.width, targetPiece.height);
 
-  // Replace each piece with the other's clone
-  puzzleContainer.replaceChild(sourceClone, targetPiece);
-  puzzleContainer.replaceChild(targetClone, sourcePiece);
+  sourceCtx.putImageData(targetImageData, 0, 0);
+  targetCtx.putImageData(sourceImageData, 0, 0);
 
-  // Re-attach event listeners (since cloneNode doesn't copy them)
-  addPieceEventListeners(sourceClone);
-  addPieceEventListeners(targetClone);
+  // Swap dataset attributes
+  const tempPos = sourcePiece.dataset.position;
+  sourcePiece.dataset.position = targetPiece.dataset.position;
+  targetPiece.dataset.position = tempPos;
 }
 
     function addPieceEventListeners(piece) {
